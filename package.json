@@ -1,0 +1,12 @@
+{
+  "name": "g3xlikes",
+  "version": "1.0.0",
+  "description": "Barra de Meta de Likes G3X",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
