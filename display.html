@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Barra de Likes G3X</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: Arial, sans-serif; 
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 0;
+    }
+    .container {
+      background: linear-gradient(135deg, #0033aa 0%, #0d47a1 100%);
+      border: 2px solid #c41e3a;
+      border-radius: 8px;
+      padding: 12px 16px;
+      width: auto;
+      min-width: 240px;
+      box-shadow: 0 4px 12px rgba(0, 51, 170, 0.4);
+    }
+    .header {
+      background: rgba(0, 0, 0, 0.2);
+      padding: 6px 8px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    .label {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.8);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 2px;
+    }
+    .target {
+      font-size: 16px;
+      color: white;
+      font-weight: 700;
+    }
+    .target span { color: #ff6b6b; }
+    .likes {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 8px;
+      background: white;
+      border-radius: 6px;
+    }
+    .thumb { font-size: 20px; }
+    .number {
+      font-size: 18px;
+      color: #0033aa;
+      font-weight: 700;
+    }
+    .dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      background: #c41e3a;
+      border-radius: 50%;
+      margin-left: 4px;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="label">Meta de Likes</div>
+      <div class="target"><span id="tgt">20K</span></div>
+    </div>
+    <div class="likes">
+      <div class="thumb">👍</div>
+      <div class="number" id="lks">0<span class="dot"></span></div>
+    </div>
+  </div>
+
+  <script>
+    function fmt(n) {
+      if (n >= 1000000) return (n/1000000).toFixed(1).replace('.',',') + 'M';
+      if (n >= 1000) return (n/1000).toFixed(1).replace('.',',') + 'K';
+      return n.toString();
+    }
+
+    function inicializar() {
+      const target = localStorage.getItem('target') || '20000';
+      document.getElementById('tgt').textContent = fmt(parseInt(target));
+      atualizar();
+    }
+
+    function atualizar() {
+      const apiKey = localStorage.getItem('apiKey');
+      const videoId = localStorage.getItem('videoId');
+      
+      if (!apiKey || !videoId) {
+        document.getElementById('lks').innerHTML = '⚠️<span class="dot"></span>';
+        return;
+      }
+      
+      const url = `https://www.googleapis.com/youtube/v3/videos?id=${videoId}&key=${apiKey}&part=statistics`;
+      
+      fetch(url)
+        .then(r => r.json())
+        .then(data => {
+          if (data.items && data.items[0]) {
+            const likes = parseInt(data.items[0].statistics.likeCount || 0);
+            document.getElementById('lks').innerHTML = fmt(likes) + '<span class="dot"></span>';
+          }
+        })
+        .catch(e => {
+          console.log('Erro:', e);
+          document.getElementById('lks').innerHTML = '❌<span class="dot"></span>';
+        });
+    }
+
+    inicializar();
+    setInterval(atualizar, 15000);
+  </script>
+</body>
+</html>
