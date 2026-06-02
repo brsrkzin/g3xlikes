@@ -71,4 +71,67 @@
       animation: pulse 1.5s infinite;
     }
     @keyframes pulse {
-      0%, 100% { opa
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="label">Meta de Likes</div>
+      <div class="target"><span id="tgt">20K</span></div>
+    </div>
+    <div class="likes">
+      <div class="thumb">👍</div>
+      <div class="number" id="lks">0<span class="dot"></span></div>
+    </div>
+  </div>
+
+  <script>
+    function fmt(n) {
+      if (n >= 1000000) return (n/1000000).toFixed(1).replace('.',',') + 'M';
+      if (n >= 1000) return (n/1000).toFixed(1).replace('.',',') + 'K';
+      return n.toString();
+    }
+
+    // Pegar parâmetros da URL
+    const params = new URLSearchParams(window.location.search);
+    const apiKey = params.get('api');
+    const videoId = params.get('video');
+    const targetLikes = params.get('target') || '20000';
+
+    function inicializar() {
+      document.getElementById('tgt').textContent = fmt(parseInt(targetLikes));
+      atualizar();
+    }
+
+    function atualizar() {
+      if (!apiKey || !videoId) {
+        document.getElementById('lks').innerHTML = '⚠️<span class="dot"></span>';
+        return;
+      }
+      
+      const url = `https://www.googleapis.com/youtube/v3/videos?id=${videoId}&key=${apiKey}&part=statistics`;
+      
+      fetch(url)
+        .then(r => r.json())
+        .then(data => {
+          if (data.items && data.items[0]) {
+            const likes = parseInt(data.items[0].statistics.likeCount || 0);
+            document.getElementById('lks').innerHTML = fmt(likes) + '<span class="dot"></span>';
+          } else {
+            document.getElementById('lks').innerHTML = '❌<span class="dot"></span>';
+          }
+        })
+        .catch(e => {
+          console.log('Erro:', e);
+          document.getElementById('lks').innerHTML = '❌<span class="dot"></span>';
+        });
+    }
+
+    inicializar();
+    setInterval(atualizar, 15000);
+  </script>
+</body>
+</html>
