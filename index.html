@@ -109,25 +109,24 @@
     .controls button:hover {
       background: #0022aa;
     }
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
-  <div>
-    <div class="container">
-      <div class="header">
-        <div class="label">Meta de Likes</div>
-        <div class="target"><span id="tgt">20K</span></div>
-      </div>
-      <div class="likes">
-        <div class="thumb">👍</div>
-        <div class="number" id="lks">0<span class="dot"></span></div>
-      </div>
+  <div class="container">
+    <div class="header">
+      <div class="label">Meta de Likes</div>
+      <div class="target"><span id="tgt">20K</span></div>
     </div>
-
-    <div class="controls">
+    <div class="likes">
+      <div class="thumb">👍</div>
+      <div class="number" id="lks">0<span class="dot"></span></div>
+    </div>
+    
+    <div class="controls" id="controls">
       <h3>🎮 Configurar</h3>
       <input type="text" id="apiKey" placeholder="API Key do YouTube" value="">
-      <input type="text" id="videoId" placeholder="ID do vídeo (ex: IXeVYhv7s1U)" value="IXeVYhv7s1U">
+      <input type="text" id="videoId" placeholder="ID do vídeo" value="">
       <input type="number" id="target" placeholder="Meta de likes" value="20000">
       <button onclick="salvar()">Salvar & Atualizar</button>
       <p style="font-size: 11px; color: #999; margin-top: 10px;">Os dados são salvos no navegador</p>
@@ -141,70 +140,103 @@
       return n.toString();
     }
 
-    function carregar() {
-      const apiKey = localStorage.getItem('apiKey') || '';
-      const videoId = localStorage.getItem('videoId') || 'IXeVYhv7s1U';
-      const target = localStorage.getItem('target') || '20000';
-      
-      document.getElementById('apiKey').value = apiKey;
-      document.getElementById('videoId').value = videoId;
-      document.getElementById('target').value = target;
-      
-      document.getElementById('tgt').textContent = fmt(parseInt(target));
-      
-      if (apiKey) atualizar();
-    }
+    // Verificar se é modo display (com query params)
+    const params = new URLSearchParams(window.location.search);
+    const isDisplay = params.has('api') && params.has('video');
 
-    function salvar() {
-      const apiKey = document.getElementById('apiKey').value.trim();
-      const videoId = document.getElementById('videoId').value.trim();
-      const target = document.getElementById('target').value.trim();
-      
-      if (!apiKey || !videoId || !target) {
-        alert('Preencha todos os campos!');
-        return;
+    if (isDisplay) {
+      // Modo display - esconder controles
+      document.getElementById('controls').classList.add('hidden');
+      document.body.style.background = 'transparent';
+      document.body.style.padding = '0';
+      document.body.style.minHeight = 'auto';
+
+      const apiKey = params.get('api');
+      const videoId = params.get('video');
+      const target = params.get('target') || '20000';
+
+      document.getElementById('tgt').textContent = fmt(parseInt(target));
+
+      function atualizar() {
+        if (!apiKey || !videoId) {
+          document.getElementById('lks').innerHTML = '⚠️<span class="dot"></span>';
+          return;
+        }
+        
+        const url = `https://www.googleapis.com/youtube/v3/videos?id=${videoId}&key=${apiKey}&part=statistics`;
+        
+        fetch(url)
+          .then(r => r.json())
+          .then(data => {
+            if (data.items && data.items[0]) {
+              const likes = parseInt(data.items[0].statistics.likeCount || 0);
+              document.getElementById('lks').innerHTML = fmt(likes) + '<span class="dot"></span>';
+            }
+          })
+          .catch(e => console.log('Erro:', e));
       }
-      
-      localStorage.setItem('apiKey', apiKey);
-      localStorage.setItem('videoId', videoId);
-      localStorage.setItem('target', target);
-      
-      document.getElementById('tgt').textContent = fmt(parseInt(target));
+
       atualizar();
-      alert('✅ Salvo com sucesso!');
+      setInterval(atualizar, 15000);
+    } else {
+      // Modo painel
+      function carregar() {
+        const apiKey = localStorage.getItem('apiKey') || '';
+        const videoId = localStorage.getItem('videoId') || '';
+        const target = localStorage.getItem('target') || '20000';
+        
+        document.getElementById('apiKey').value = apiKey;
+        document.getElementById('videoId').value = videoId;
+        document.getElementById('target').value = target;
+        
+        document.getElementById('tgt').textContent = fmt(parseInt(target));
+        
+        if (apiKey) atualizar();
+      }
+
+      function salvar() {
+        const apiKey = document.getElementById('apiKey').value.trim();
+        const videoId = document.getElementById('videoId').value.trim();
+        const target = document.getElementById('target').value.trim();
+        
+        if (!apiKey || !videoId || !target) {
+          alert('Preencha todos os campos!');
+          return;
+        }
+        
+        localStorage.setItem('apiKey', apiKey);
+        localStorage.setItem('videoId', videoId);
+        localStorage.setItem('target', target);
+        
+        document.getElementById('tgt').textContent = fmt(parseInt(target));
+        atualizar();
+        alert('✅ Salvo com sucesso!');
+      }
+
+      function atualizar() {
+        const apiKey = localStorage.getItem('apiKey');
+        const videoId = localStorage.getItem('videoId');
+        
+        if (!apiKey || !videoId) return;
+        
+        const url = `https://www.googleapis.com/youtube/v3/videos?id=${videoId}&key=${apiKey}&part=statistics`;
+        
+        fetch(url)
+          .then(r => r.json())
+          .then(data => {
+            if (data.items && data.items[0]) {
+              const likes = parseInt(data.items[0].statistics.likeCount || 0);
+              document.getElementById('lks').innerHTML = fmt(likes) + '<span class="dot"></span>';
+            }
+          })
+          .catch(e => console.log('Erro:', e));
+      }
+
+      carregar();
+      setInterval(atualizar, 15000);
+
+      window.salvar = salvar;
     }
-
-    function atualizar() {
-      const apiKey = localStorage.getItem('apiKey');
-      const videoId = localStorage.getItem('videoId');
-      
-      if (!apiKey || !videoId) return;
-      
-      const url = `https://www.googleapis.com/youtube/v3/videos?id=${videoId}&key=${apiKey}&part=statistics`;
-      
-      fetch(url)
-        .then(r => r.json())
-        .then(data => {
-          if (data.items && data.items[0]) {
-            const likes = parseInt(data.items[0].statistics.likeCount || 0);
-            document.getElementById('lks').innerHTML = fmt(likes) + '<span class="dot"></span>';
-          }
-        })
-        .catch(e => console.log('Erro:', e));
-    }
-
-    carregar();
-    setInterval(atualizar, 15000);
-
-    document.getElementById('apiKey').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') salvar();
-    });
-    document.getElementById('videoId').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') salvar();
-    });
-    document.getElementById('target').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') salvar();
-    });
   </script>
 </body>
 </html>
