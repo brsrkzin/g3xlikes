@@ -203,4 +203,46 @@ const server = http.createServer((req, res) => {
 <html><head><meta charset="UTF-8"><style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { background: transparent; display: flex; align-items: center; justify-content: center; height: 100vh; }
-.container
+.container { background: linear-gradient(135deg, #0033aa 0%, #0d47a1 100%); border: 3px solid #c41e3a; border-radius: 12px; padding: 16px 20px; text-align: center; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3); }
+.header { background: rgba(0,0,0,0.15); padding: 8px; border-radius: 6px; margin-bottom: 12px; }
+.label { font-size: 12px; color: rgba(255,255,255,0.9); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+.target { font-size: 28px; color: #ffd700; font-weight: 900; margin-top: 4px; }
+.likes { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 10px 14px; background: white; border-radius: 8px; border-bottom: 3px solid #c41e3a; }
+.thumb { font-size: 24px; }
+.number { font-size: 24px; color: #0033aa; font-weight: 800; }
+.dot { width: 8px; height: 8px; background: #c41e3a; border-radius: 50%; display: inline-block; margin-left: 6px; animation: pulse 1.5s infinite; }
+@keyframes pulse { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
+</style></head><body>
+<div class="container">
+  <div class="header">
+    <div class="label">Meta de Likes</div>
+    <div class="target">${fmt(parseInt(target))}</div>
+  </div>
+  <div class="likes">
+    <div class="thumb">👍</div>
+    <div class="number">${fmt(likes)}<span class="dot"></span></div>
+  </div>
+</div>
+</body></html>`;
+          
+          res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+          res.end(html);
+        } catch (e) {
+          res.writeHead(500);
+          res.end('Erro ao processar');
+        }
+      });
+    }).on('error', () => {
+      res.writeHead(500);
+      res.end('Erro na API');
+    });
+    return;
+  }
+  
+  res.writeHead(404);
+  res.end('Não encontrado');
+});
+
+server.listen(PORT, () => {
+  console.log('🎥 G3X Likes rodando na porta ' + PORT);
+});
